@@ -1,0 +1,128 @@
+﻿@page "/edit-product/{id:int}"
+@using BlazorShop.Shared.Models
+@using BlazorShop.Client.Services
+@inject ProductService ProductService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Редактировать товар</PageTitle>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            @if (product == null)
+            {
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Редактировать товар</h4>
+                    </div>
+                    <div class="card-body">
+                        <EditForm Model="product" OnValidSubmit="HandleValidSubmit">
+                            <DataAnnotationsValidator />
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Название товара</label>
+                                <InputText class="form-control" @bind-Value="product.Name" />
+                                <ValidationMessage For="@(() => product.Name)" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Описание</label>
+                                <InputTextArea class="form-control" rows="3" @bind-Value="product.Description" />
+                                <ValidationMessage For="@(() => product.Description)" class="text-danger" />
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Цена</label>
+                                        <InputNumber class="form-control" @bind-Value="product.Price" />
+                                        <ValidationMessage For="@(() => product.Price)" class="text-danger" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Количество</label>
+                                        <InputNumber class="form-control" @bind-Value="product.Quantity" />
+                                        <ValidationMessage For="@(() => product.Quantity)" class="text-danger" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Категория</label>
+                                <InputText class="form-control" @bind-Value="product.Category" />
+                                <ValidationMessage For="@(() => product.Category)" class="text-danger" />
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-secondary" @onclick="Cancel">
+                                    <i class="fas fa-times"></i> Отменить
+                                </button>
+                                <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                    @if (isSubmitting)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2"></span>
+                                    }
+                                    <i class="fas fa-save"></i> Сохранить изменения
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    
+    private Product? product;
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        product = await ProductService.GetProductAsync(Id);
+        
+        if (product == null)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Товар не найден!");
+            Navigation.NavigateTo("/products");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (product == null) return;
+        
+        isSubmitting = true;
+        
+        var success = await ProductService.UpdateProductAsync(product);
+        
+        if (success)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Товар успешно обновлен!");
+            Navigation.NavigateTo("/products");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Ошибка при обновлении товара!");
+        }
+        
+        isSubmitting = false;
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/products");
+    }
+}

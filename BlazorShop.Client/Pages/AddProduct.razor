@@ -1,0 +1,102 @@
+﻿@page "/add-product"
+@using BlazorShop.Shared.Models
+@using BlazorShop.Client.Services
+@inject ProductService ProductService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Добавить товар</PageTitle>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Добавить новый товар</h4>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="product" OnValidSubmit="HandleValidSubmit">
+                        <DataAnnotationsValidator />
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Название товара</label>
+                            <InputText class="form-control" @bind-Value="product.Name" />
+                            <ValidationMessage For="@(() => product.Name)" class="text-danger" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Описание</label>
+                            <InputTextArea class="form-control" rows="3" @bind-Value="product.Description" />
+                            <ValidationMessage For="@(() => product.Description)" class="text-danger" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Цена</label>
+                                    <InputNumber class="form-control" @bind-Value="product.Price" />
+                                    <ValidationMessage For="@(() => product.Price)" class="text-danger" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Количество</label>
+                                    <InputNumber class="form-control" @bind-Value="product.Quantity" />
+                                    <ValidationMessage For="@(() => product.Quantity)" class="text-danger" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Категория</label>
+                            <InputText class="form-control" @bind-Value="product.Category" />
+                            <ValidationMessage For="@(() => product.Category)" class="text-danger" />
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" @onclick="Cancel">
+                                <i class="fas fa-times"></i> Отменить
+                            </button>
+                            <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                }
+                                <i class="fas fa-save"></i> Сохранить
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Product product = new();
+    private bool isSubmitting = false;
+
+    private async Task HandleValidSubmit()
+    {
+        isSubmitting = true;
+        
+        var success = await ProductService.CreateProductAsync(product);
+        
+        if (success)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Товар успешно добавлен!");
+            Navigation.NavigateTo("/products");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Ошибка при добавлении товара!");
+        }
+        
+        isSubmitting = false;
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/products");
+    }
+}

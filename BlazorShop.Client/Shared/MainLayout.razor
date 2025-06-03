@@ -1,0 +1,81 @@
+﻿@inherits LayoutView
+@inject IJSRuntime JSRuntime
+
+<div class="page" data-theme="@currentTheme">
+    <div class="theme-switcher">
+        <button class="theme-toggle" @onclick="ToggleTheme">
+            @if (currentTheme == "light")
+            {
+                <i class="fas fa-moon"></i>
+                Темная тема
+                        }
+            else
+            {
+                <i class="fas fa-sun"></i>
+                Светлая тема
+                        }
+        </button>
+    </div>
+
+    <main>
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">
+                    <i class="fas fa-store"></i> Интернет-магазин
+                </a>
+                <div class="navbar-nav">
+                    <a class="nav-link" href="/products">
+                        <i class="fas fa-boxes"></i> Товары
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid mt-4">
+            @Body
+        </div>
+    </main>
+</div>
+
+@code {
+    private string currentTheme = "light";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var savedTheme = await JSRuntime.InvokeAsync<string>("eval",
+                    "typeof(Storage) !== 'undefined' ? localStorage.getItem('theme') : null");
+
+                if (!string.IsNullOrEmpty(savedTheme))
+                {
+                    currentTheme = savedTheme;
+                    StateHasChanged();
+                }
+            }
+            catch
+            {
+                // Если localStorage недоступен, используем тему по умолчанию
+            }
+        }
+    }
+
+    private async Task ToggleTheme()
+    {
+        currentTheme = currentTheme == "light" ? "dark" : "light";
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval",
+                $"typeof(Storage) !== 'undefined' && localStorage.setItem('theme', '{currentTheme}')");
+        }
+        catch
+        {
+            // Игнорируем ошибки localStorage
+        }
+
+        StateHasChanged();
+    }
+}

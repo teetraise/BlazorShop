@@ -1,0 +1,119 @@
+﻿@page "/products"
+@page "/"
+@using BlazorShop.Shared.Models
+@using BlazorShop.Client.Services
+@inject ProductService ProductService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Товары</PageTitle>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Управление товарами</h3>
+        <button class="btn btn-primary" @onclick="NavigateToAdd">
+            <i class="fas fa-plus"></i> Добавить товар
+        </button>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+        </div>
+    }
+    else if (products.Count == 0)
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Товары не найдены. 
+            <a href="/add-product" class="alert-link">Добавить первый товар</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var product in products)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">@product.Name</h5>
+                            <p class="card-text">@product.Description</p>
+                            <div class="mb-2">
+                                <span class="badge bg-secondary">@product.Category</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong class="text-success">@product.Price.ToString("C")</strong>
+                                    <br>
+                                    <small class="text-muted">В наличии: @product.Quantity</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="btn-group w-100" role="group">
+                                <button class="btn btn-outline-primary btn-sm" 
+                                        @onclick="() => NavigateToEdit(product.Id)">
+                                    <i class="fas fa-edit"></i> Изменить
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" 
+                                        @onclick="() => ConfirmDelete(product)">
+                                    <i class="fas fa-trash"></i> Удалить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<Product> products = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        isLoading = true;
+        products = await ProductService.GetProductsAsync();
+        isLoading = false;
+    }
+
+    private void NavigateToAdd()
+    {
+        Navigation.NavigateTo("/add-product");
+    }
+
+    private void NavigateToEdit(int id)
+    {
+        Navigation.NavigateTo($"/edit-product/{id}");
+    }
+
+    private async Task ConfirmDelete(Product product)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            $"Вы уверены, что хотите удалить товар '{product.Name}'?");
+        
+        if (confirmed)
+        {
+            var success = await ProductService.DeleteProductAsync(product.Id);
+            if (success)
+            {
+                await LoadProducts();
+                await JSRuntime.InvokeVoidAsync("alert", "Товар успешно удален!");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Ошибка при удалении товара!");
+            }
+        }
+    }
+}
