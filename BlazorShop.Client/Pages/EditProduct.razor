@@ -1,7 +1,7 @@
-﻿@page "/edit-product/{id:int}"
+@page "/edit-product/{id:int}"
 @using BlazorShop.Shared.Models
 @using BlazorShop.Client.Services
-@inject ProductService ProductService
+@inject IProductService ProductService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -25,6 +25,13 @@
                         <h4>Редактировать товар</h4>
                     </div>
                     <div class="card-body">
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger mb-3">
+                                @errorMessage
+                            </div>
+                        }
+                        
                         <EditForm Model="product" OnValidSubmit="HandleValidSubmit">
                             <DataAnnotationsValidator />
                             
@@ -88,6 +95,7 @@
     
     private Product? product;
     private bool isSubmitting = false;
+    private string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -105,20 +113,39 @@
         if (product == null) return;
         
         isSubmitting = true;
+        errorMessage = string.Empty;
         
-        var success = await ProductService.UpdateProductAsync(product);
-        
-        if (success)
+        try
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Товар успешно обновлен!");
-            Navigation.NavigateTo("/products");
+            var success = await ProductService.UpdateProductAsync(product);
+            
+            if (success)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Товар успешно обновлен!");
+                Navigation.NavigateTo("/products");
+            }
+            else
+            {
+                errorMessage = "Ошибка при обновлении товара. Пожалуйста, проверьте данные и попробуйте снова.";
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Ошибка при обновлении товара!");
+            Console.WriteLine($"Исключение при обновлении товара: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Внутреннее исключение: {ex.InnerException.Message}");
+                errorMessage = $"Произошла ошибка: {ex.Message}. Детали: {ex.InnerException.Message}";
+            }
+            else
+            {
+                errorMessage = $"Произошла ошибка: {ex.Message}";
+            }
         }
-        
-        isSubmitting = false;
+        finally
+        {
+            isSubmitting = false;
+        }
     }
 
     private void Cancel()

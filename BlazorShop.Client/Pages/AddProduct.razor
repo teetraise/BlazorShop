@@ -1,7 +1,7 @@
-﻿@page "/add-product"
+@page "/add-product"
 @using BlazorShop.Shared.Models
 @using BlazorShop.Client.Services
-@inject ProductService ProductService
+@inject IProductService ProductService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -15,6 +15,13 @@
                     <h4>Добавить новый товар</h4>
                 </div>
                 <div class="card-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger mb-3">
+                            @errorMessage
+                        </div>
+                    }
+                    
                     <EditForm Model="product" OnValidSubmit="HandleValidSubmit">
                         <DataAnnotationsValidator />
                         
@@ -76,23 +83,26 @@
     private Product product = new();
     private bool isSubmitting = false;
 
+    private string errorMessage = string.Empty;
+
     private async Task HandleValidSubmit()
     {
-        isSubmitting = true;
-        
-        var success = await ProductService.CreateProductAsync(product);
-        
-        if (success)
+        try
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Товар успешно добавлен!");
-            Navigation.NavigateTo("/products");
+            var result = await ProductService.CreateProductAsync(product);
+            if (result.Success)
+            {
+                NavigationManager.NavigateTo("/products");
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Ошибка при добавлении товара!");
+            errorMessage = $"Произошла ошибка: {ex.Message}";
         }
-        
-        isSubmitting = false;
     }
 
     private void Cancel()

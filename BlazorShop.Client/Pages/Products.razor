@@ -1,10 +1,10 @@
-﻿@page "/products"
+@page "/products"
 @page "/"
 @using BlazorShop.Shared.Models
-@using BlazorShop.Client.Services
-@inject ProductService ProductService
-@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@inject Services.IProductService ProductService
 
 <PageTitle>Товары</PageTitle>
 
@@ -16,6 +16,13 @@
         </button>
     </div>
 
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @errorMessage
+        </div>
+    }
+
     @if (isLoading)
     {
         <div class="text-center">
@@ -24,7 +31,7 @@
             </div>
         </div>
     }
-    else if (products.Count == 0)
+    else if (products == null || products.Count == 0)
     {
         <div class="alert alert-info">
             <i class="fas fa-info-circle"></i> Товары не найдены. 
@@ -59,7 +66,7 @@
                                     <i class="fas fa-edit"></i> Изменить
                                 </button>
                                 <button class="btn btn-outline-danger btn-sm" 
-                                        @onclick="() => ConfirmDelete(product)">
+                                        @onclick="() => ConfirmDelete(product.Id)">
                                     <i class="fas fa-trash"></i> Удалить
                                 </button>
                             </div>
@@ -72,7 +79,8 @@
 </div>
 
 @code {
-    private List<Product> products = new();
+    private List<Product>? products;
+    private string? errorMessage;
     private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
@@ -82,37 +90,74 @@
 
     private async Task LoadProducts()
     {
-        isLoading = true;
-        products = await ProductService.GetProductsAsync();
-        isLoading = false;
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            products = await ProductService.GetProductsAsync();
+            
+            if (products == null)
+            {
+                errorMessage = "Не удалось загрузить список товаров. Пожалуйста, проверьте соединение с сервером.";
+                products = new List<Product>();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка при загрузке товаров: {ex.Message}";
+            Console.WriteLine($"Исключение при загрузке товаров: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Внутреннее исключение: {ex.InnerException.Message}");
+            }
+            products = new List<Product>();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     private void NavigateToAdd()
     {
-        Navigation.NavigateTo("/add-product");
+        NavigationManager.NavigateTo("/add-product");
     }
 
     private void NavigateToEdit(int id)
     {
-        Navigation.NavigateTo($"/edit-product/{id}");
+        NavigationManager.NavigateTo($"/edit-product/{id}");
     }
 
-    private async Task ConfirmDelete(Product product)
+    private async Task ConfirmDelete(int id)
     {
-        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
-            $"Вы уверены, что хотите удалить товар '{product.Name}'?");
-        
-        if (confirmed)
+        try
         {
-            var success = await ProductService.DeleteProductAsync(product.Id);
-            if (success)
+            bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Вы уверены, что хотите удалить этот товар?");
+
+            if (confirmed)
             {
-                await LoadProducts();
-                await JSRuntime.InvokeVoidAsync("alert", "Товар успешно удален!");
+                errorMessage = null;
+                bool success = await ProductService.DeleteProductAsync(id);
+
+                if (success)
+                {
+                    await LoadProducts();
+                    await JSRuntime.InvokeVoidAsync("alert", "Товар успешно удален!");
+                }
+                else
+                {
+                    errorMessage = $"Не удалось удалить товар с ID {id}. Пожалуйста, проверьте соединение с сервером.";
+                }
             }
-            else
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка при удалении товара: {ex.Message}";
+            Console.WriteLine($"Исключение при удалении товара: {ex.Message}");
+            if (ex.InnerException != null)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Ошибка при удалении товара!");
+                Console.WriteLine($"Внутреннее исключение: {ex.InnerException.Message}");
             }
         }
     }

@@ -3,35 +3,44 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавление сервисов
+// Р”РѕР±Р°РІР»РµРЅРёРµ СЃРµСЂРІРёСЃРѕРІ
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-// Добавление CORS
+// РќР°СЃС‚СЂРѕР№РєР° CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorClient", policy =>
     {
-        policy.WithOrigins("https://localhost:7001") // URL клиента
+        policy.WithOrigins(
+                "https://localhost:7147", // URL РєР»РёРµРЅС‚Р° (HTTPS)
+                "http://localhost:5293"   // URL РєР»РёРµРЅС‚Р° (HTTP)
+              )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
 });
 
+// РќР°СЃС‚СЂРѕР№РєР° Р»РѕРіРёСЂРѕРІР°РЅРёСЏ
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+builder.Logging.SetMinimumLevel(LogLevel.Information);
+
 var app = builder.Build();
 
-// Создание базы данных
+// РЎРѕР·РґР°РЅРёРµ Р±Р°Р·С‹ РґР°РЅРЅС‹С…
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     context.Database.EnsureCreated();
 }
 
-// Конфигурация pipeline
+// РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();

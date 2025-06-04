@@ -1,4 +1,4 @@
-﻿/* Основные стили */
+/* Основные стили */
 :root {
     --primary-color: #0d6efd;
     --secondary-color: #6c757d;
@@ -17,6 +17,22 @@
     --card-bg: #ffffff;
     --border-color: #dee2e6;
     --navbar-bg: #f8f9fa;
+    --sidebar-bg: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    --sidebar-text: #ffffff;
+    --top-row-bg: #f8f9fa;
+    --top-row-text: #212529;
+    --link-color: #0d6efd;
+    --link-hover-color: #0a58ca;
+    --input-bg: #ffffff;
+    --input-text: #212529;
+    --input-border: #ced4da;
+    --button-bg: #0d6efd;
+    --button-text: #ffffff;
+    --button-hover-bg: #0b5ed7;
+    --shadow-color: rgba(0, 0, 0, 0.15);
+    --table-header-bg: #f8f9fa;
+    --table-border: #dee2e6;
+    --table-hover-bg: rgba(0, 0, 0, 0.075);
 }
 
 /* Темная тема */
@@ -26,6 +42,22 @@
     --card-bg: #1e1e1e;
     --border-color: #404040;
     --navbar-bg: #1e1e1e;
+    --sidebar-bg: linear-gradient(180deg, #1e1e1e 0%, #2d1a3a 70%);
+    --sidebar-text: #ffffff;
+    --top-row-bg: #1e1e1e;
+    --top-row-text: #ffffff;
+    --link-color: #6ea8fe;
+    --link-hover-color: #8bb9fe;
+    --input-bg: #2c2c2c;
+    --input-text: #ffffff;
+    --input-border: #404040;
+    --button-bg: #0d6efd;
+    --button-text: #ffffff;
+    --button-hover-bg: #0b5ed7;
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --table-header-bg: #2c2c2c;
+    --table-border: #404040;
+    --table-hover-bg: rgba(255, 255, 255, 0.075);
 }
 
 body {
@@ -45,6 +77,55 @@ body {
     transition: background-color 0.3s ease;
 }
 
+.sidebar {
+    background-image: var(--sidebar-bg);
+    color: var(--sidebar-text);
+}
+
+.top-row {
+    background-color: var(--top-row-bg);
+    color: var(--top-row-text);
+    border-bottom: 1px solid var(--border-color);
+}
+
+a {
+    color: var(--link-color);
+}
+
+a:hover {
+    color: var(--link-hover-color);
+}
+
+.form-control {
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border-color: var(--input-border);
+}
+
+.btn-primary {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border-color: var(--button-bg);
+}
+
+.btn-primary:hover {
+    background-color: var(--button-hover-bg);
+    border-color: var(--button-hover-bg);
+}
+
+table {
+    color: var(--text-color);
+    border-color: var(--table-border);
+}
+
+thead {
+    background-color: var(--table-header-bg);
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--table-hover-bg);
+}
+
 .theme-switcher {
     position: fixed;
     top: 20px;
@@ -62,25 +143,27 @@ body {
     transition: all 0.3s ease;
 }
 
-    .theme-toggle:hover {
-        background-color: var(--primary-color);
-        color: white;
-    }
+.theme-toggle:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
 
 /* Анимации для карточек */
 .card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-    .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
 
 /* Стили для форм */
 .form-control:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    background-color: var(--input-bg);
+    color: var(--input-text);
 }
 
 /* Responsive */
