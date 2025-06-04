@@ -92,7 +92,7 @@
             var result = await ProductService.CreateProductAsync(product);
             if (result.Success)
             {
-                NavigationManager.NavigateTo("/products");
+                Navigation.NavigateTo("/products");
             }
             else
             {
